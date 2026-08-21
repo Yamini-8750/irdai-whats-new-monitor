@@ -1,0 +1,339 @@
+{
+  "name": "IRDAI What's New Monitor",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "triggerAtHour": 13
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.3,
+      "position": [
+        0,
+        0
+      ],
+      "id": "b0ce9926-d09f-4ede-bfe1-2c63e11c198e",
+      "name": "Schedule Trigger"
+    },
+    {
+      "parameters": {
+        "url": "https://irdai.gov.in/web/guest/whats-new",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "User-Agent",
+              "value": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
+            },
+            {
+              "name": "Accept",
+              "value": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8"
+            }
+          ]
+        },
+        "options": {
+          "response": {
+            "response": {
+              "responseFormat": "text"
+            }
+          }
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        208,
+        0
+      ],
+      "id": "b63195f3-0814-4bd0-b0ff-6c7c4220d1be",
+      "name": "HTTP Request"
+    },
+    {
+      "parameters": {
+        "jsCode": "const html = $input.first().json.data;\n\n// Extract the DLFileEntryArray JSON from the HTML\nconst varIndex = html.indexOf('var DLFileEntryArray = ');\nconst arrayStart = varIndex + 'var DLFileEntryArray = '.length;\nconst arrayEnd = html.indexOf('];', arrayStart) + 1;\nconst arrayJson = html.substring(arrayStart, arrayEnd);\n\n// Parse the JSON array\nconst entries = JSON.parse(arrayJson);\n\n// Map to clean output with document URL\nconst results = entries.map(entry => ({\n  json: {\n    date: entry.dateId,\n    title: entry.title,\n    category: entry.subTitle,\n    url: `https://irdai.gov.in/web/guest/document-detail?documentId=${entry.fileentryId}`,\n    fileentryId: entry.fileentryId,\n    source: 'IRDAI'\n  }\n}));\n\nreturn results;"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        416,
+        0
+      ],
+      "id": "4f9e3952-1221-41c7-9b93-c9a291addc2e",
+      "name": "Code in JavaScript"
+    },
+    {
+      "parameters": {
+        "authentication": "serviceAccount",
+        "documentId": {
+          "__rl": true,
+          "value": "Sheet ID",
+          "mode": "list",
+          "cachedResultName": "Beshak Change Log",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/SheetID/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": 144201620,
+          "mode": "list",
+          "cachedResultName": "IRDAI-Seen",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/Sheetid/edit#gid=144201620"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        624,
+        0
+      ],
+      "id": "f24c98f9-c77b-4bbf-ad94-f5fc193654b2",
+      "name": "Get row(s) in sheet",
+      "executeOnce": true,
+      "alwaysOutputData": true,
+      "credentials": {
+        "googleApi": {
+          "id": "fplrr0JjJntmEehj",
+          "name": "Google Service Account account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// Get all items fetched from IRDAI\nconst fetchedItems = $('Code in JavaScript').all().map(item => item.json);\n\n// Get already seen IDs from sheet (empty array if sheet is empty)\nlet seenIds = [];\ntry {\n  const sheetItems = $('Get row(s) in sheet').all();\n  seenIds = sheetItems\n    .filter(item => item.json && item.json.fileentryId)\n    .map(item => String(item.json.fileentryId));\n} catch(e) {\n  seenIds = [];\n}\n\n// Filter only NEW items\nconst newItems = fetchedItems.filter(item => \n  !seenIds.includes(String(item.fileentryId))\n);\n\nif (newItems.length === 0) {\n  return [{ json: { noNewItems: true, message: 'No new IRDAI updates today' } }];\n}\n\nreturn newItems.map(item => ({ json: item }));"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        832,
+        0
+      ],
+      "id": "29480025-c48f-4761-8377-2e1ee1856c72",
+      "name": "Code in JavaScript1"
+    },
+    {
+      "parameters": {
+        "authentication": "serviceAccount",
+        "operation": "appendOrUpdate",
+        "documentId": {
+          "__rl": true,
+          "value": "1uQAhJ3NQPJNiM7uQiR689FPRK3qyPbnuvunMNO-iKN0",
+          "mode": "list",
+          "cachedResultName": "Beshak Change Log",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1uQAhJ3NQPJNiM7uQiR689FPRK3qyPbnuvunMNO-iKN0/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": 144201620,
+          "mode": "list",
+          "cachedResultName": "IRDAI-Seen",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/SheetID/edit#gid=144201620"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "fileentryId": "={{ $json.fileentryId }}",
+            "date": "= {{ $json.date }}",
+            "title": "={{ $json.title }}",
+            "category": "={{ $json.category }}"
+          },
+          "matchingColumns": [
+            "fileentryId"
+          ],
+          "schema": [
+            {
+              "id": "fileentryId",
+              "displayName": "fileentryId",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "date",
+              "displayName": "date",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "title",
+              "displayName": "title",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "category",
+              "displayName": "category",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        1104,
+        0
+      ],
+      "id": "5a7ca37a-263e-4afd-885c-a4b44d526570",
+      "name": "Append or update row in sheet",
+      "credentials": {
+        "googleApi": {
+          "id": "fplrr0JjJntmEehj",
+          "name": "Google Service Account account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "fromEmail": "personal mail",
+        "toEmail": "organisational mail",
+        "subject": "={{ $json.subject }}",
+        "emailFormat": "text",
+        "text": "={{ $json.body }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.emailSend",
+      "typeVersion": 2.1,
+      "position": [
+        1504,
+        0
+      ],
+      "id": "8e7a8a52-c0ab-4e0f-be19-b7498193e8e9",
+      "name": "Send an Email",
+      "webhookId": "ad83e7d4-04a9-4e9a-b0bf-a36eebe6e3a3",
+      "credentials": {
+        "smtp": {
+          "id": "y6wauMYtK9eQDGvX",
+          "name": "SMTP account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// Combine all new items into one email\nconst items = $input.all().map(i => i.json);\n\nconst itemList = items.map((item, index) => \n  `${index + 1}. ${item.date} | ${item.category}\n   ${item.title}\n   Link: ${item.url || 'https://irdai.gov.in/web/guest/whats-new'}\n`).join('\\n');\n\nconst emailBody = `New IRDAI Updates Detected (${items.length} new items)\n\n${itemList}\n\n---\nThis email was sent automatically by Beshak Monitor`;\n\nreturn [{\n  json: {\n    count: items.length,\n    subject: `🔔 IRDAI: ${items.length} New Update(s) Detected`,\n    body: emailBody,\n    items: items\n  }\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1312,
+        0
+      ],
+      "id": "abdf40a5-2652-49ac-88b6-d6221961d4fe",
+      "name": "Code in JavaScript2"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Schedule Trigger": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP Request": {
+      "main": [
+        [
+          {
+            "node": "Code in JavaScript",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code in JavaScript": {
+      "main": [
+        [
+          {
+            "node": "Get row(s) in sheet",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get row(s) in sheet": {
+      "main": [
+        [
+          {
+            "node": "Code in JavaScript1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code in JavaScript1": {
+      "main": [
+        [
+          {
+            "node": "Append or update row in sheet",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Append or update row in sheet": {
+      "main": [
+        [
+          {
+            "node": "Code in JavaScript2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code in JavaScript2": {
+      "main": [
+        [
+          {
+            "node": "Send an Email",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "availableInMCP": false
+  },
+  "versionId": "adc9e109-9e2e-4bca-bcbb-b34f596aa7ba",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "31ec4fcd30232c5e8b2a49647b3963214702341da0e0c6feb0265f9da911b222"
+  },
+  "nodeGroups": [],
+  "id": "sklogGFGolFvUTTR",
+  "tags": []
+}

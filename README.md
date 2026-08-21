@@ -5,7 +5,7 @@ A daily automation that watches the IRDAI regulator's "What's New" page, detects
 > **Impact:** Eliminated daily manual checking of the IRDAI portal and closed a real gap: regulatory updates were easy to miss given the volume and frequency of publications, and missing one directly affects the accuracy of insurance ratings and research. The monitor runs **every day at 9:00 AM IST** and reliably surfaces new circulars, consultation papers, notifications, and orders.
 
 <!-- Add a short Loom showing a run + the resulting email digest -->
-**▶️ Demo:** [https://drive.google.com/file/d/1sUwoqOm8QZvEaBsdgSLq1gdsy-dgSmmH/view?usp=sharing](url)
+**▶️ Demo:** [Link](https://drive.google.com/file/d/1sUwoqOm8QZvEaBsdgSLq1gdsy-dgSmmH/view?usp=drive_link)
 
 
 ---
